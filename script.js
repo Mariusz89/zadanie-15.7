@@ -1,11 +1,19 @@
 class Stopwatch extends React.Component {
     constructor(props) {
         super(props);
-        this.running = false;
-        this.display = display;
+
+        this.times = {};
+        this.state = {
+            display: '',
+            results: []
+        };
+
+        this.running = false;        
+        this.laps = [];        
+    }
+
+    componentDidMount() {
         this.reset();
-        this.laps = [];
-        this.results = results;
     }
 
     reset() {
@@ -14,11 +22,14 @@ class Stopwatch extends React.Component {
             seconds: 0,
             miliseconds: 0
         }
-        this.display.innerText = this.format(this.times);
+        
+        this.print();
     }
 
     print() {
-        this.display.innerText = this.format(this.times);
+        this.setState({
+            display: this.format(this.times)
+        });
 	}
 
 	format(times) {
@@ -39,13 +50,17 @@ class Stopwatch extends React.Component {
     }
 
     lap() {
-        const li = document.createElement('li');
-        li.innerText = this.format(this.times);
-        this.results.appendChild(li);
+        const results = this.state.results;
+        
+        results.push(this.format(this.times));
+
+        this.setState({
+            results
+        });
     }
 
     clearList() {
-        deleteLaps(this.results);
+        this.setState({results: []});
     }
 
     calculate() {
@@ -63,23 +78,11 @@ class Stopwatch extends React.Component {
     stop() {
         this.running = false;
         clearInterval(this.watch);
-    }
-
-
-    function pad0(value) {
-        let result = value.toString();
-        if (result.length < 2) {
-            result = '0' + result;
-        }
-        return result;
-    }
-
-    function deleteLaps(node) {
-        while (node.lastChild)
-            node.removeChild(node.lastChild);
-    }
+    }    
 
     render() {
+        const liResults = this.state.results.map((item, i) => <li key={i}>{item}</li>);
+
         return (
             <div className="container">
                 <div className="stopwatch">
@@ -90,14 +93,24 @@ class Stopwatch extends React.Component {
                         <a href="#" className="button lap"  onClick={this.lap.bind(this)}>Results</a>
                         <a href="#" className="button clearList" onClick={this.clearList.bind(this)}>ClearList</a>
                   </div>
+                    { this.state.display }                  
                 </div>
-                  <ul className="results"></ul>   
+                <ul className="results">
+                    { liResults }    
+                </ul>   
             </div>
               
         );
     }
 }
 
+function pad0(value) {
+    let result = value.toString();
+    if (result.length < 2) {
+        result = '0' + result;
+    }
+    return result;
+}
 
 ReactDOM.render(
   <Stopwatch />,
