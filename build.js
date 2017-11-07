@@ -1,6 +1,4 @@
-'use strict';
-
-var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+"use strict";
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
@@ -10,127 +8,173 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var formattedSeconds = function formattedSeconds(sec) {
-  return Math.floor(sec / 60) + ':' + ('0' + sec % 60).slice(-2);
-};
-
 var Stopwatch = function (_React$Component) {
-  _inherits(Stopwatch, _React$Component);
+    _inherits(Stopwatch, _React$Component);
 
-  function Stopwatch(props) {
-    _classCallCheck(this, Stopwatch);
+    function Stopwatch(props) {
+        _classCallCheck(this, Stopwatch);
 
-    var _this = _possibleConstructorReturn(this, (Stopwatch.__proto__ || Object.getPrototypeOf(Stopwatch)).call(this, props));
+        var _this = _possibleConstructorReturn(this, (Stopwatch.__proto__ || Object.getPrototypeOf(Stopwatch)).call(this, props));
 
-    _this.state = {
-      secondsElapsed: 0,
-      laps: [],
-      lastClearedIncrementer: null
-    };
-    _this.incrementer = null;
-    return _this;
-  }
+        _this.times = {};
+        _this.state = {
+            display: '',
+            results: []
+        };
 
-  _createClass(Stopwatch, [{
-    key: 'handleStartClick',
-    value: function handleStartClick() {
-      var _this2 = this;
-
-      this.incrementer = setInterval(function () {
-        return _this2.setState({
-          secondsElapsed: _this2.state.secondsElapsed + 1
-        });
-      }, 1000);
+        _this.running = false;
+        _this.laps = [];
+        return _this;
     }
-  }, {
-    key: 'handleStopClick',
-    value: function handleStopClick() {
-      clearInterval(this.incrementer);
-      this.setState({
-        lastClearedIncrementer: this.incrementer
-      });
-    }
-  }, {
-    key: 'handleResetClick',
-    value: function handleResetClick() {
-      clearInterval(this.incrementer);
-      this.setState({
-        secondsElapsed: 0,
-        laps: []
-      });
-    }
-  }, {
-    key: 'handleLabClick',
-    value: function handleLabClick() {
-      this.setState({
-        laps: this.state.laps.concat([this.state.secondsElapsed])
-      });
-    }
-  }, {
-    key: 'render',
-    value: function render() {
-      return React.createElement(
-        'div',
-        { className: 'stopwatch' },
-        React.createElement(
-          'h1',
-          { className: 'stopwatch-timer' },
-          formattedSeconds(this.state.secondsElapsed)
-        ),
-        this.state.secondsElapsed === 0 || this.incrementer === this.state.lastClearedIncrementer ? React.createElement(
-          Button,
-          { className: 'start-btn', onClick: this.handleStartClick.bind(this) },
-          'start'
-        ) : React.createElement(
-          Button,
-          { className: 'stop-btn', onClick: this.handleStopClick.bind(this) },
-          'stop'
-        ),
-        this.state.secondsElapsed !== 0 && this.incrementer !== this.state.lastClearedIncrementer ? React.createElement(
-          Button,
-          { onClick: this.handleLabClick.bind(this) },
-          'lab'
-        ) : null,
-        this.state.secondsElapsed !== 0 && this.incrementer === this.state.lastClearedIncrementer ? React.createElement(
-          Button,
-          { onClick: this.handleResetClick.bind(this) },
-          'reset'
-        ) : null,
-        React.createElement(
-          'ul',
-          { className: 'stopwatch-laps' },
-          this.state.laps.map(function (lap, i) {
+
+    _createClass(Stopwatch, [{
+        key: "componentDidMount",
+        value: function componentDidMount() {
+            this.reset();
+        }
+    }, {
+        key: "reset",
+        value: function reset() {
+            this.times = {
+                minutes: 0,
+                seconds: 0,
+                miliseconds: 0
+            };
+
+            this.print();
+        }
+    }, {
+        key: "print",
+        value: function print() {
+            this.setState({
+                display: this.format(this.times)
+            });
+        }
+    }, {
+        key: "format",
+        value: function format(times) {
+            return pad0(times.minutes) + ":" + pad0(times.seconds) + ":" + pad0(Math.floor(times.miliseconds));
+        }
+    }, {
+        key: "start",
+        value: function start() {
+            var _this2 = this;
+
+            if (!this.running) {
+                this.running = true;
+                this.watch = setInterval(function () {
+                    return _this2.step();
+                }, 10);
+            }
+        }
+    }, {
+        key: "step",
+        value: function step() {
+            if (!this.running) return;
+            this.calculate();
+            this.print();
+        }
+    }, {
+        key: "lap",
+        value: function lap() {
+            var results = this.state.results;
+
+            results.push(this.format(this.times));
+
+            this.setState({
+                results: results
+            });
+        }
+    }, {
+        key: "clearList",
+        value: function clearList() {
+            this.setState({ results: [] });
+        }
+    }, {
+        key: "calculate",
+        value: function calculate() {
+            this.times.miliseconds += 1;
+            if (this.times.miliseconds >= 100) {
+                this.times.seconds += 1;
+                this.times.miliseconds = 0;
+            }
+            if (this.times.seconds >= 60) {
+                this.times.minutes += 1;
+                this.times.seconds = 0;
+            }
+        }
+    }, {
+        key: "stop",
+        value: function stop() {
+            this.running = false;
+            clearInterval(this.watch);
+        }
+    }, {
+        key: "render",
+        value: function render() {
+            var liResults = this.state.results.map(function (item, i) {
+                return React.createElement(
+                    "li",
+                    { key: i },
+                    item
+                );
+            });
+
             return React.createElement(
-              'li',
-              { className: 'stopwatch-lap' },
-              React.createElement(
-                'strong',
-                null,
-                i + 1
-              ),
-              '/ ',
-              formattedSeconds(lap)
+                "div",
+                { className: "container" },
+                React.createElement(
+                    "div",
+                    { className: "stopwatch" },
+                    React.createElement(
+                        "div",
+                        { className: "controls" },
+                        React.createElement(
+                            "a",
+                            { href: "#", className: "button start", onClick: this.start.bind(this) },
+                            "Start"
+                        ),
+                        React.createElement(
+                            "a",
+                            { href: "#", className: "button stop", onClick: this.stop.bind(this) },
+                            "Stop"
+                        ),
+                        React.createElement(
+                            "a",
+                            { href: "#", className: "button reset", onClick: this.reset.bind(this) },
+                            "Reset"
+                        ),
+                        React.createElement(
+                            "a",
+                            { href: "#", className: "button lap", onClick: this.lap.bind(this) },
+                            "Results"
+                        ),
+                        React.createElement(
+                            "a",
+                            { href: "#", className: "button clearList", onClick: this.clearList.bind(this) },
+                            "ClearList"
+                        )
+                    ),
+                    this.state.display
+                ),
+                React.createElement(
+                    "ul",
+                    { className: "results" },
+                    liResults
+                )
             );
-          })
-        )
-      );
-    }
-  }]);
+        }
+    }]);
 
-  return Stopwatch;
+    return Stopwatch;
 }(React.Component);
 
-/** verbose component before 0.14
-class Button extends React.Component {
-  render() {
-    return <button type="button" {...this.props}
-                   className={"btn " + this.props.className } />;
-  }
+function pad0(value) {
+    var result = value.toString();
+    if (result.length < 2) {
+        result = '0' + result;
+    }
+    return result;
 }
-*/
 
-var Button = function Button(props) {
-  return React.createElement('button', _extends({ type: 'button' }, props, { className: "btn " + props.className }));
-};
-
-React.render(React.createElement(Stopwatch, null), document.body);
+ReactDOM.render(React.createElement(Stopwatch, null), document.getElementById('Stopwatch'));
